@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CarService Pro - Notas Fiscais</title>
+    <title>CarService Pro - Integração WhatsApp</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -28,8 +28,7 @@
             --danger: #ef4444;
             --info: #3b82f6;
             --whatsapp: #25d366;
-            --nfe: #f97316;
-            --nfe-dark: #ea580c;
+            --whatsapp-dark: #128c7e;
         }
 
         body {
@@ -107,7 +106,7 @@
         .toast.error { border-left: 4px solid var(--danger); }
         .toast.warning { border-left: 4px solid var(--warning); }
         .toast.info { border-left: 4px solid var(--info); }
-        .toast.nfe { border-left: 4px solid var(--nfe); }
+        .toast.whatsapp { border-left: 4px solid var(--whatsapp); }
 
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
@@ -206,6 +205,11 @@
             color: var(--warning);
         }
 
+        .connection-badge.whatsapp {
+            background: rgba(37, 211, 102, 0.2);
+            color: var(--whatsapp);
+        }
+
         .nav-menu {
             padding: 16px 12px;
             flex: 1;
@@ -244,8 +248,8 @@
             text-align: center;
         }
 
-        .nav-item .nfe-icon {
-            color: var(--nfe);
+        .nav-item .whatsapp-icon {
+            color: var(--whatsapp);
         }
 
         .sidebar-footer {
@@ -330,6 +334,17 @@
             border-color: var(--primary);
         }
 
+        .icon-btn.whatsapp {
+            background: rgba(37, 211, 102, 0.1);
+            border-color: var(--whatsapp);
+            color: var(--whatsapp);
+        }
+
+        .icon-btn.whatsapp:hover {
+            background: var(--whatsapp);
+            color: white;
+        }
+
         .badge {
             position: absolute;
             top: -4px;
@@ -344,6 +359,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .badge.whatsapp {
+            background: var(--whatsapp);
         }
 
         .dashboard-title {
@@ -383,10 +402,10 @@
             color: var(--info);
         }
 
-        /* NFe Specific Styles */
-        .nfe-header {
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.1));
-            border: 1px solid rgba(249, 115, 22, 0.2);
+        /* WhatsApp Specific Styles */
+        .whatsapp-header {
+            background: linear-gradient(135deg, rgba(37, 211, 102, 0.1), rgba(18, 140, 126, 0.1));
+            border: 1px solid rgba(37, 211, 102, 0.2);
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 24px;
@@ -395,10 +414,10 @@
             gap: 16px;
         }
 
-        .nfe-icon-large {
+        .whatsapp-icon-large {
             width: 60px;
             height: 60px;
-            background: var(--nfe);
+            background: var(--whatsapp);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -407,17 +426,17 @@
             color: white;
         }
 
-        .nfe-info h3 {
+        .whatsapp-info h3 {
             font-size: 20px;
             margin-bottom: 4px;
         }
 
-        .nfe-info p {
+        .whatsapp-info p {
             color: var(--text-secondary);
             font-size: 14px;
         }
 
-        .nfe-status {
+        .whatsapp-status {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -428,14 +447,307 @@
             margin-top: 8px;
         }
 
-        .nfe-status.active {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success);
+        .whatsapp-status.connected {
+            background: rgba(37, 211, 102, 0.2);
+            color: var(--whatsapp);
         }
 
-        .nfe-status.inactive {
+        .whatsapp-status.disconnected {
             background: rgba(239, 68, 68, 0.2);
             color: var(--danger);
+        }
+
+        /* Chat Layout */
+        .chat-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            height: calc(100vh - 200px);
+        }
+
+        .chat-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-search {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-search input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .chat-search input:focus {
+            outline: none;
+            border-color: var(--whatsapp);
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-item:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .chat-item.active {
+            background: rgba(37, 211, 102, 0.1);
+            border-left: 3px solid var(--whatsapp);
+        }
+
+        .chat-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--whatsapp), var(--whatsapp-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .chat-preview {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-preview h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-preview p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-meta {
+            text-align: right;
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .chat-badge {
+            background: var(--whatsapp);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Chat Main Area */
+        .chat-main {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2325d366' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.received {
+            background: rgba(255,255,255,0.05);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.sent {
+            background: rgba(37, 211, 102, 0.2);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: flex-end;
+        }
+
+        .message-status {
+            color: var(--whatsapp);
+        }
+
+        .chat-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--whatsapp);
+        }
+
+        .chat-send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--whatsapp);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--whatsapp-dark);
+            transform: scale(1.05);
+        }
+
+        /* Templates */
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .template-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .template-card:hover {
+            border-color: var(--whatsapp);
+            transform: translateY(-2px);
+        }
+
+        .template-card h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--whatsapp);
+        }
+
+        .template-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* QR Code Modal */
+        .qr-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .qr-code {
+            width: 250px;
+            height: 250px;
+            background: white;
+            border-radius: 12px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: #333;
         }
 
         /* Stats Grid */
@@ -482,24 +794,16 @@
             font-size: 18px;
         }
 
-        .stat-icon.blue { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
-        .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .stat-icon.orange { background: rgba(249, 115, 22, 0.1); color: var(--nfe); }
-        .stat-icon.nfe { background: rgba(249, 115, 22, 0.1); color: var(--nfe); }
+        .stat-icon.whatsapp {
+            background: rgba(37, 211, 102, 0.1);
+            color: var(--whatsapp);
+        }
 
         .stat-value {
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 8px;
         }
-
-        .stat-change {
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .stat-change.positive { color: var(--success); }
-        .stat-change.negative { color: var(--danger); }
 
         .quick-actions {
             background: var(--bg-card);
@@ -528,4 +832,1775 @@
         }
 
         .action-btn {
-            background: rgba(255,255,255,0
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .action-btn:hover {
+            background: rgba(37, 211, 102, 0.1);
+            border-color: var(--whatsapp);
+            transform: translateY(-2px);
+        }
+
+        .action-btn i {
+            font-size: 24px;
+            margin-bottom: 12px;
+            display: block;
+            color: var(--text-secondary);
+        }
+
+        .action-btn:hover i {
+            color: var(--whatsapp);
+        }
+
+        .action-btn span {
+            font-size: 14px;
+            font-weight: 500;
+            display: block;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .view-all {
+            color: var(--primary);
+            font-size: 13px;
+            text-decoration: none;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .service-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .service-item:hover {
+            background: rgba(255,255,255,0.04);
+            transform: translateX(4px);
+        }
+
+        .service-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .service-info {
+            flex: 1;
+        }
+
+        .service-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .service-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .service-meta {
+            text-align: right;
+        }
+
+        .service-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.progress {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .appointment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .appointment-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .appointment-time {
+            text-align: center;
+            min-width: 50px;
+        }
+
+        .appointment-time .day {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .appointment-time .month {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .appointment-info {
+            flex: 1;
+        }
+
+        .appointment-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .appointment-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .btn-details {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-details:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-whatsapp {
+            background: var(--whatsapp);
+        }
+
+        .btn-whatsapp:hover {
+            background: var(--whatsapp-dark);
+        }
+
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            font-size: 14px;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .actions-grid { grid-template-columns: repeat(2, 1fr); }
+            .connection-bar { left: 0; }
+            .chat-container { grid-template-columns: 1fr; }
+            .chat-sidebar { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; padding: 16px; padding-top: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .content-grid { grid-template-columns: 1fr; }
+            .actions-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status Bar -->
+    <div class="connection-bar connecting" id="connectionBar"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="color: var(--text-secondary);">Conectando ao sistema...</p>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-wrench"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>CarService Pro</h1>
+                    <span>Gestão Automotiva</span>
+                    <span class="connection-badge offline" id="connectionBadge">
+                        <i class="fas fa-circle"></i> <span id="badgeText">Conectando...</span>
+                    </span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" onclick="showSection('clientes')">
+                    <i class="fas fa-users"></i>
+                    <span>Clientes</span>
+                </button>
+                <button class="nav-item" onclick="showSection('agenda')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Agenda</span>
+                </button>
+                <button class="nav-item" onclick="showSection('orcamentos')">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Orçamentos</span>
+                </button>
+                <button class="nav-item" onclick="showSection('mensagens')">
+                    <i class="fab fa-whatsapp whatsapp-icon"></i>
+                    <span>WhatsApp</span>
+                    <span class="badge whatsapp" id="waBadge" style="display: none;">0</span>
+                </button>
+                <button class="nav-item" onclick="showSection('perfil')">
+                    <i class="fas fa-cog"></i>
+                    <span>Perfil</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="help-box">
+                    <h4>Precisa de ajuda?</h4>
+                    <p id="connectionInfo">Conectando...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="welcome">
+                    <h2>Bem-vindo de volta!</h2>
+                    <p id="currentDate">Carregando...</p>
+                </div>
+                <div class="header-actions">
+                    <div class="date-badge">
+                        <i class="far fa-clock"></i>
+                        <span id="fullDate">...</span>
+                    </div>
+                    <button class="icon-btn" onclick="refreshData()" title="Sincronizar">
+                        <i class="fas fa-sync-alt" id="syncIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section-content active">
+                <div class="dashboard-title">
+                    <h1>
+                        Dashboard 
+                        <span class="sync-badge syncing" id="syncBadge">
+                            <i class="fas fa-spinner fa-spin"></i> Sincronizando...
+                        </span>
+                    </h1>
+                    <p>Visão geral da sua oficina</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Clientes Ativos</span>
+                            <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                        </div>
+                        <div class="stat-value" id="statClientes">-</div>
+                        <div class="stat-change positive">Total de clientes</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Agendamentos Hoje</span>
+                            <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+                        </div>
+                        <div class="stat-value" id="statAgendamentos">-</div>
+                        <div class="stat-change positive">Para hoje</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Orçamentos Pendentes</span>
+                            <div class="stat-icon orange"><i class="fas fa-file-invoice"></i></div>
+                        </div>
+                        <div class="stat-value" id="statOrcamentos">-</div>
+                        <div class="stat-change negative">Aguardando aprovação</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Mensagens WhatsApp</span>
+                            <div class="stat-icon whatsapp"><i class="fab fa-whatsapp"></i></div>
+                        </div>
+                        <div class="stat-value" id="statWhatsApp">-</div>
+                        <div class="stat-change positive">Hoje</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="section-header">
+                        <h3>Ações Rápidas</h3>
+                    </div>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="openModal('cliente')">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Cadastrar Cliente</span>
+                        </button>
+                        <button class="action-btn" onclick="showSection('agenda')">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Ver Agenda</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('orcamento')">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Novo Orçamento</span>
+                        </button>
+                        <button class="action-btn" onclick="openWhatsAppChat()">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>Abrir WhatsApp</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Serviços Recentes</h3>
+                            <button class="view-all" onclick="showSection('agenda')">Ver todos</button>
+                        </div>
+                        <div class="service-list" id="recentServices">
+                            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Próximos Agendamentos</h3>
+                            <button class="view-all" onclick="showSection('agenda')">Ver agenda</button>
+                        </div>
+                        <div class="appointment-list" id="upcomingAppointments">
+                            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes Section -->
+            <div id="clientes-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Clientes</h1>
+                    <p>Gerencie seus clientes</p>
+                </div>
+                <div class="quick-actions" style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="openModal('cliente')">
+                        <i class="fas fa-plus"></i> Novo Cliente
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="clientesTable">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th>Veículo</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="5" class="empty-state">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Agenda Section -->
+            <div id="agenda-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Agenda</h1>
+                    <p>Agendamentos e serviços</p>
+                </div>
+                <div class="quick-actions" style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="openModal('agendamento')">
+                        <i class="fas fa-plus"></i> Novo Agendamento
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="agendaTable">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="5" class="empty-state">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orçamentos Section -->
+            <div id="orcamentos-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Orçamentos</h1>
+                    <p>Gerencie orçamentos</p>
+                </div>
+                <div class="quick-actions" style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="openModal('orcamento')">
+                        <i class="fas fa-plus"></i> Novo Orçamento
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="orcamentosTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="6" class="empty-state">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- WhatsApp Section -->
+            <div id="mensagens-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1><i class="fab fa-whatsapp" style="color: var(--whatsapp);"></i> WhatsApp Integration</h1>
+                    <p>Central de atendimento via WhatsApp</p>
+                </div>
+
+                <!-- WhatsApp Status Header -->
+                <div class="whatsapp-header">
+                    <div class="whatsapp-icon-large">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div class="whatsapp-info">
+                        <h3>Conexão WhatsApp</h3>
+                        <p>Envie mensagens diretamente para seus clientes</p>
+                        <span class="whatsapp-status disconnected" id="waStatus">
+                            <i class="fas fa-times-circle"></i> Desconectado
+                        </span>
+                    </div>
+                    <button class="btn-primary btn-whatsapp" onclick="connectWhatsApp()">
+                        <i class="fas fa-qrcode"></i> Conectar WhatsApp
+                    </button>
+                </div>
+
+                <!-- Templates Rápidos -->
+                <div class="panel" style="margin-bottom: 24px;">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-paper-plane"></i> Mensagens Rápidas</h3>
+                    </div>
+                    <div class="templates-grid">
+                        <div class="template-card" onclick="sendTemplate('orcamento')">
+                            <h4><i class="fas fa-file-invoice-dollar"></i> Enviar Orçamento</h4>
+                            <p>Olá [nome], seu orçamento para [serviço] no valor de R$ [valor] está pronto. Aguardamos sua aprovação!</p>
+                        </div>
+                        <div class="template-card" onclick="sendTemplate('agendamento')">
+                            <h4><i class="fas fa-calendar-check"></i> Confirmar Agendamento</h4>
+                            <p>Olá [nome], confirmamos seu agendamento para [data] às [hora] para [serviço]. Aguardamos você!</p>
+                        </div>
+                        <div class="template-card" onclick="sendTemplate('pronto')">
+                            <h4><i class="fas fa-check-circle"></i> Serviço Pronto</h4>
+                            <p>Olá [nome], seu [veículo] está pronto! Pode vir buscar quando quiser. Obrigado pela preferência!</p>
+                        </div>
+                        <div class="template-card" onclick="sendTemplate('lembrete')">
+                            <h4><i class="fas fa-bell"></i> Lembrete</h4>
+                            <p>Olá [nome], passando para lembrar que seu agendamento é amanhã às [hora]. Confirma presença?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Interface -->
+                <div class="chat-container">
+                    <div class="chat-sidebar">
+                        <div class="chat-search">
+                            <input type="text" placeholder="Buscar cliente..." id="searchClient" onkeyup="filterClients()">
+                        </div>
+                        <div class="chat-list" id="chatList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="chat-main">
+                        <div class="chat-header">
+                            <div class="chat-header-info">
+                                <div class="chat-avatar" id="chatAvatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 id="chatName">Selecione um cliente</h4>
+                                    <p style="font-size: 13px; color: var(--text-secondary);" id="chatPhone">--</p>
+                                </div>
+                            </div>
+                            <div class="chat-header-actions">
+                                <button class="icon-btn whatsapp" onclick="openNativeWhatsApp()" title="Abrir no WhatsApp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="empty-state" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                                <i class="fab fa-whatsapp" style="font-size: 64px; color: var(--whatsapp); opacity: 0.3;"></i>
+                                <p>Selecione um cliente para iniciar a conversa</p>
+                                <p style="font-size: 12px; margin-top: 8px;">Ou use os templates acima para enviar mensagens rápidas</p>
+                            </div>
+                        </div>
+
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="messageInput" placeholder="Digite sua mensagem..." onkeypress="handleEnter(event)">
+                            <button class="chat-send-btn" onclick="sendMessage()" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perfil Section -->
+            <div id="perfil-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Configurações</h1>
+                    <p>Status da conexão</p>
+                </div>
+                <div class="panel" style="max-width: 600px;">
+                    <div class="form-group">
+                        <label>Status do Sistema</label>
+                        <div id="configStatus" style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            Verificando...
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="testConnection()">
+                        <i class="fas fa-plug"></i> Testar Conexão
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modais -->
+    <div class="modal-overlay" id="modalCliente">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Cadastrar Cliente</h2>
+                <button class="modal-close" onclick="closeModal('cliente')"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveCliente(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome Completo *</label>
+                            <input type="text" name="nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefone *</label>
+                            <input type="tel" name="telefone" required placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Veículo</label>
+                            <input type="text" name="veiculo" placeholder="Ex: Honda Civic 2020">
+                        </div>
+                        <div class="form-group">
+                            <label>Placa</label>
+                            <input type="text" name="placa" placeholder="ABC-1234">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('cliente')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAgendamento">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Novo Agendamento</h2>
+                <button class="modal-close" onclick="closeModal('agendamento')"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveAgendamento(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Cliente *</label>
+                        <select name="cliente_id" id="selectCliente" required></select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Data *</label>
+                            <input type="date" name="data" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hora *</label>
+                            <input type="time" name="hora" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço *</label>
+                        <select name="servico" required>
+                            <option value="">Selecione...</option>
+                            <option value="Troca de óleo">Troca de óleo</option>
+                            <option value="Alinhamento">Alinhamento</option>
+                            <option value="Balanceamento">Balanceamento</option>
+                            <option value="Revisão completa">Revisão completa</option>
+                            <option value="Troca de pneus">Troca de pneus</option>
+                            <option value="Freios">Freios</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('agendamento')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-calendar-check"></i> Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOrcamento">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Novo Orçamento</h2>
+                <button class="modal-close" onclick="closeModal('orcamento')"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveOrcamento(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Cliente *</label>
+                        <select name="cliente_id" id="selectClienteOrc" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço *</label>
+                        <input type="text" name="servico" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Valor (R$) *</label>
+                            <input type="number" name="valor" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Validade</label>
+                            <input type="date" name="validade">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('orcamento')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Gerar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- QR Code Modal for WhatsApp -->
+    <div class="modal-overlay" id="modalQR">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fab fa-whatsapp" style="color: var(--whatsapp);"></i> Conectar WhatsApp</h2>
+                <button class="modal-close" onclick="closeModal('qr')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="qr-container">
+                    <p>Escaneie o QR Code com seu WhatsApp:</p>
+                    <div class="qr-code" id="qrCode">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 14px;">
+                        Abra o WhatsApp no celular > Menu > Dispositivos Conectados > Conectar Dispositivo
+                    </p>
+                    <div class="tip-box" style="margin-top: 20px;">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Nota:</strong> Esta é uma simulação. Para integração real, você precisa de um backend Node.js com whatsapp-web.js ou usar a API oficial do WhatsApp Business.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURAÇÃO
+        // ==========================================
+        
+        const CONFIG = {
+            SUPABASE_URL: 'https://gnzwannepurpyryxabkf.supabase.co',
+            SUPABASE_KEY: 'sua-chave-aqui', // Substitua pela sua chave real em config.js
+            APP_NAME: 'CarService Pro',
+            VERSION: '1.0.0',
+            WHATSAPP_ENABLED: true
+        };
+        
+        let supabaseClient = null;
+        let isConnected = false;
+        let localData = { clientes: [], agendamentos: [], orcamentos: [], mensagens: [] };
+        let selectedClient = null;
+        let whatsappConnected = false;
+
+        // ==========================================
+        // INICIALIZAÇÃO
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            initializeApp();
+        });
+
+        async function initializeApp() {
+            await connectToSupabase();
+        }
+
+        // ==========================================
+        // SUPABASE
+        // ==========================================
+
+        async function connectToSupabase() {
+            updateConnectionUI('connecting', 'Conectando...');
+            
+            try {
+                const { createClient } = supabase;
+                supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+                
+                const { data, error } = await supabaseClient.from('clientes').select('*').limit(1);
+                if (error && !error.message.includes('does not exist')) throw error;
+                
+                isConnected = true;
+                updateConnectionUI('connected', 'Conectado');
+                showToast('✅ Sistema conectado!', 'success');
+                
+                await loadAllData();
+                loadWhatsAppChats();
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                isConnected = false;
+                updateConnectionUI('error', 'Erro: ' + error.message);
+                showToast('❌ ' + error.message, 'error');
+                loadMockData();
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        function updateConnectionUI(status, text) {
+            const bar = document.getElementById('connectionBar');
+            const badge = document.getElementById('connectionBadge');
+            const info = document.getElementById('connectionInfo');
+            
+            bar.className = 'connection-bar ' + status;
+            
+            const icons = {
+                connected: 'check-circle',
+                connecting: 'spinner fa-spin',
+                error: 'exclamation-circle'
+            };
+            
+            badge.className = 'connection-badge ' + (status === 'connected' ? 'connected' : 'offline');
+            badge.innerHTML = `<i class="fas fa-${icons[status] || 'circle'}"></i> ${text}`;
+            info.textContent = text;
+        }
+
+        // ==========================================
+        // WHATSAPP INTEGRATION
+        // ==========================================
+
+        function connectWhatsApp() {
+            // Simulação - em produção, isso conectaria com whatsapp-web.js via backend
+            openModal('qr');
+            
+            // Simular conexão após 3 segundos
+            setTimeout(() => {
+                closeModal('qr');
+                whatsappConnected = true;
+                updateWhatsAppStatus();
+                showToast('📱 WhatsApp conectado!', 'whatsapp');
+            }, 3000);
+        }
+
+        function updateWhatsAppStatus() {
+            const statusEl = document.getElementById('waStatus');
+            if (whatsappConnected) {
+                statusEl.className = 'whatsapp-status connected';
+                statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Conectado';
+                document.getElementById('connectionBadge').className = 'connection-badge whatsapp';
+                document.getElementById('badgeText').textContent = 'WhatsApp OK';
+            }
+        }
+
+        function loadWhatsAppChats() {
+            const chatList = document.getElementById('chatList');
+            
+            if (localData.clientes.length === 0) {
+                chatList.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>Nenhum cliente cadastrado</p></div>';
+                return;
+            }
+            
+            chatList.innerHTML = localData.clientes.map(c => `
+                <div class="chat-item" onclick="selectClient(${c.id})" data-id="${c.id}">
+                    <div class="chat-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="chat-preview">
+                        <h4>${c.nome}</h4>
+                        <p>${c.veiculo || 'Sem veículo cadastrado'}</p>
+                    </div>
+                    <div class="chat-meta">
+                        <div class="chat-time">${formatPhone(c.telefone)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectClient(clientId) {
+            selectedClient = localData.clientes.find(c => c.id === clientId);
+            
+            // Atualizar UI
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.id) === clientId) {
+                    item.classList.add('active');
+                }
+            });
+            
+            document.getElementById('chatName').textContent = selectedClient.nome;
+            document.getElementById('chatPhone').textContent = formatPhone(selectedClient.telefone);
+            
+            // Carregar mensagens (simulado)
+            loadMessages(clientId);
+        }
+
+        function loadMessages(clientId) {
+            const container = document.getElementById('chatMessages');
+            const mensagens = localData.mensagens.filter(m => m.cliente_id === clientId);
+            
+            if (mensagens.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); margin-top: 40px;">
+                        <p>Nenhuma mensagem ainda</p>
+                        <p style="font-size: 12px; margin-top: 8px;">Envie uma mensagem para iniciar a conversa</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = mensagens.map(m => `
+                <div class="message ${m.tipo}">
+                    ${m.texto}
+                    <div class="message-time">
+                        ${formatTime(m.created_at)}
+                        ${m.tipo === 'sent' ? '<i class="fas fa-check-double message-status"></i>' : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const texto = input.value.trim();
+            
+            if (!texto) return;
+            if (!selectedClient) {
+                showToast('Selecione um cliente primeiro', 'warning');
+                return;
+            }
+            
+            // Adicionar mensagem local
+            const mensagem = {
+                id: Date.now(),
+                cliente_id: selectedClient.id,
+                texto: texto,
+                tipo: 'sent',
+                created_at: new Date().toISOString()
+            };
+            
+            localData.mensagens.push(mensagem);
+            
+            // Abrir WhatsApp Web com mensagem pré-preenchida
+            const phone = selectedClient.telefone.replace(/\D/g, '');
+            const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(texto)}`;
+            window.open(whatsappUrl, '_blank');
+            
+            input.value = '';
+            loadMessages(selectedClient.id);
+            showToast('Mensagem enviada!', 'whatsapp');
+        }
+
+        function sendTemplate(tipo) {
+            if (!selectedClient) {
+                showToast('Selecione um cliente primeiro', 'warning');
+                return;
+            }
+            
+            const templates = {
+                orcamento: `Olá ${selectedClient.nome}, seu orçamento está pronto! Aguardamos sua aprovação. Qualquer dúvida estamos à disposição.`,
+                agendamento: `Olá ${selectedClient.nome}, confirmamos seu agendamento. Aguardamos você na data e horário combinados.`,
+                pronto: `Olá ${selectedClient.nome}, seu ${selectedClient.veiculo || 'veículo'} está pronto! Pode vir buscar quando quiser.`,
+                lembrete: `Olá ${selectedClient.nome}, passando para lembrar do seu agendamento amanhã. Confirma presença?`
+            };
+            
+            document.getElementById('messageInput').value = templates[tipo];
+        }
+
+        function openNativeWhatsApp() {
+            if (!selectedClient) {
+                showToast('Selecione um cliente primeiro', 'warning');
+                return;
+            }
+            const phone = selectedClient.telefone.replace(/\D/g, '');
+            window.open(`https://wa.me/55${phone}`, '_blank');
+        }
+
+        function openWhatsAppChat() {
+            showSection('mensagens');
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function filterClients() {
+            const search = document.getElementById('searchClient').value.toLowerCase();
+            const items = document.querySelectorAll('.chat-item');
+            
+            items.forEach(item => {
+                const name = item.querySelector('h4').textContent.toLowerCase();
+                item.style.display = name.includes(search) ? 'flex' : 'none';
+            });
+        }
+
+        function formatPhone(phone) {
+            if (!phone) return '--';
+            const cleaned = phone.replace(/\D/g, '');
+            if (cleaned.length === 11) {
+                return `(${cleaned.slice(0,2)}) ${cleaned.slice(2,7)}-${cleaned.slice(7)}`;
+            }
+            return phone;
+        }
+
+        // ==========================================
+        // OPERAÇÕES CRUD (mantidas do código anterior)
+        // ==========================================
+
+        async function loadAllData() {
+            document.getElementById('syncBadge').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+            await Promise.all([loadClientes(), loadAgendamentos(), loadOrcamentos()]);
+            updateDashboard();
+            updateConnectionUI('connected', 'Conectado');
+        }
+
+        async function loadClientes() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                localData.clientes = data || [];
+                renderClientesTable();
+                updateClienteSelects();
+                loadWhatsAppChats(); // Atualizar lista do WhatsApp
+            } catch (error) {
+                console.error('Erro clientes:', error);
+            }
+        }
+
+        async function loadAgendamentos() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('agendamentos')
+                    .select('*, clientes(nome, veiculo)')
+                    .order('data', { ascending: true });
+                
+                if (error) throw error;
+                localData.agendamentos = data || [];
+                renderAgendamentosTable();
+            } catch (error) {
+                console.error('Erro agendamentos:', error);
+            }
+        }
+
+        async function loadOrcamentos() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('orcamentos')
+                    .select('*, clientes(nome)')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                localData.orcamentos = data || [];
+                renderOrcamentosTable();
+            } catch (error) {
+                console.error('Erro orçamentos:', error);
+            }
+        }
+
+        async function saveCliente(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const cliente = {
+                nome: formData.get('nome'),
+                telefone: formData.get('telefone'),
+                email: formData.get('email') || null,
+                veiculo: formData.get('veiculo') || null,
+                placa: formData.get('placa') || null
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .insert([cliente])
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                localData.clientes.unshift(data);
+                showToast('✅ Cliente salvo!', 'success');
+                closeModal('cliente');
+                form.reset();
+                renderClientesTable();
+                updateClienteSelects();
+                loadWhatsAppChats(); // Atualizar WhatsApp
+                updateDashboard();
+            } catch (error) {
+                showToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function saveAgendamento(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const agendamento = {
+                cliente_id: parseInt(formData.get('cliente_id')),
+                data: formData.get('data'),
+                hora: formData.get('hora'),
+                servico: formData.get('servico'),
+                status: 'agendado'
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('agendamentos')
+                    .insert([agendamento])
+                    .select('*, clientes(nome, veiculo)')
+                    .single();
+                
+                if (error) throw error;
+                
+                localData.agendamentos.push(data);
+                showToast('✅ Agendamento criado!', 'success');
+                closeModal('agendamento');
+                form.reset();
+                renderAgendamentosTable();
+                updateDashboard();
+                
+                // Oferecer enviar confirmação por WhatsApp
+                if (confirm('Deseja enviar confirmação via WhatsApp?')) {
+                    selectClient(data.cliente_id);
+                    showSection('mensagens');
+                    sendTemplate('agendamento');
+                }
+            } catch (error) {
+                showToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function saveOrcamento(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const orcamento = {
+                cliente_id: parseInt(formData.get('cliente_id')),
+                servico: formData.get('servico'),
+                valor: parseFloat(formData.get('valor')),
+                validade: formData.get('validade') || null,
+                status: 'pendente'
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('orcamentos')
+                    .insert([orcamento])
+                    .select('*, clientes(nome)')
+                    .single();
+                
+                if (error) throw error;
+                
+                localData.orcamentos.unshift(data);
+                showToast('✅ Orçamento gerado!', 'success');
+                closeModal('orcamento');
+                form.reset();
+                renderOrcamentosTable();
+                updateDashboard();
+                
+                // Oferecer enviar por WhatsApp
+                if (confirm('Deseja enviar o orçamento via WhatsApp?')) {
+                    selectClient(data.cliente_id);
+                    showSection('mensagens');
+                    sendTemplate('orcamento');
+                }
+            } catch (error) {
+                showToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // RENDERIZAÇÃO
+        // ==========================================
+
+        function renderClientesTable() {
+            const tbody = document.querySelector('#clientesTable tbody');
+            if (localData.clientes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum cliente cadastrado</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = localData.clientes.map(c => `
+                <tr>
+                    <td>${c.nome}</td>
+                    <td>${c.telefone}</td>
+                    <td>${c.email || '-'}</td>
+                    <td>${c.veiculo || '-'}</td>
+                    <td>
+                        <button class="btn-details" onclick="deleteItem('clientes', ${c.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="btn-details" onclick="selectClient(${c.id}); showSection('mensagens')" title="Enviar WhatsApp">
+                            <i class="fab fa-whatsapp" style="color: var(--whatsapp);"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAgendamentosTable() {
+            const tbody = document.querySelector('#agendaTable tbody');
+            if (localData.agendamentos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum agendamento</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = localData.agendamentos.map(a => {
+                const cliente = a.clientes || localData.clientes.find(c => c.id == a.cliente_id);
+                return `
+                <tr>
+                    <td>${formatDate(a.data)} ${a.hora}</td>
+                    <td>${cliente ? cliente.nome : 'Cliente'}</td>
+                    <td>${a.servico}</td>
+                    <td><span class="status-badge ${getStatusClass(a.status)}">${formatStatus(a.status)}</span></td>
+                    <td>
+                        <select onchange="updateStatus('agendamentos', ${a.id}, this.value)" class="btn-details">
+                            <option value="">Alterar...</option>
+                            <option value="agendado">Agendado</option>
+                            <option value="em_andamento">Em andamento</option>
+                            <option value="concluido">Concluído</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function renderOrcamentosTable() {
+            const tbody = document.querySelector('#orcamentosTable tbody');
+            if (localData.orcamentos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum orçamento</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = localData.orcamentos.map(o => {
+                const cliente = o.clientes || localData.clientes.find(c => c.id == o.cliente_id);
+                return `
+                <tr>
+                    <td>#${o.id}</td>
+                    <td>${cliente ? cliente.nome : 'Cliente'}</td>
+                    <td>${o.servico}</td>
+                    <td>R$ ${parseFloat(o.valor).toFixed(2)}</td>
+                    <td><span class="status-badge ${getStatusClass(o.status)}">${formatStatus(o.status)}</span></td>
+                    <td>
+                        <select onchange="updateStatus('orcamentos', ${o.id}, this.value)" class="btn-details">
+                            <option value="">Alterar...</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="aprovado">Aprovado</option>
+                            <option value="pago">Pago</option>
+                            <option value="rejeitado">Rejeitado</option>
+                        </select>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function updateDashboard() {
+            document.getElementById('statClientes').textContent = localData.clientes.length;
+            
+            const hoje = new Date().toISOString().split('T')[0];
+            const agendamentosHoje = localData.agendamentos.filter(a => a.data === hoje).length;
+            document.getElementById('statAgendamentos').textContent = agendamentosHoje;
+            
+            const pendentes = localData.orcamentos.filter(o => o.status === 'pendente').length;
+            document.getElementById('statOrcamentos').textContent = pendentes;
+            
+            const msgHoje = localData.mensagens.filter(m => m.created_at && m.created_at.startsWith(hoje)).length;
+            document.getElementById('statWhatsApp').textContent = msgHoje;
+            
+            // Recent services
+            const recentEl = document.getElementById('recentServices');
+            const recentes = localData.agendamentos.slice(-3).reverse();
+            
+            if (recentes.length > 0) {
+                recentEl.innerHTML = recentes.map(a => {
+                    const cliente = a.clientes || localData.clientes.find(c => c.id == a.cliente_id);
+                    return `
+                    <div class="service-item">
+                        <div class="service-icon"><i class="fas fa-wrench"></i></div>
+                        <div class="service-info">
+                            <h4>${cliente ? cliente.nome : 'Cliente'}</h4>
+                            <p>${a.servico}<br>${cliente ? cliente.veiculo : ''}</p>
+                        </div>
+                        <div class="service-meta">
+                            <div class="service-time">${formatDate(a.data)}</div>
+                            <span class="status-badge ${getStatusClass(a.status)}">${formatStatus(a.status)}</span>
+                        </div>
+                    </div>
+                `}).join('');
+            }
+            
+            // Upcoming appointments
+            const upcomingEl = document.getElementById('upcomingAppointments');
+            const futuros = localData.agendamentos
+                .filter(a => new Date(a.data + 'T' + a.hora) > new Date())
+                .slice(0, 3);
+            
+            if (futuros.length > 0) {
+                upcomingEl.innerHTML = futuros.map(a => {
+                    const cliente = a.clientes || localData.clientes.find(c => c.id == a.cliente_id);
+                    return `
+                    <div class="appointment-item">
+                        <div class="appointment-time">
+                            <span class="day">${a.hora.split(':')[0]}</span>
+                            <span class="month">${a.hora.split(':')[1]}</span>
+                        </div>
+                        <div class="appointment-info">
+                            <h4>${cliente ? cliente.nome : 'Cliente'}</h4>
+                            <p>${a.servico}<br>${cliente ? cliente.veiculo : ''}</p>
+                        </div>
+                        <button class="btn-details" onclick="selectClient(${a.cliente_id}); showSection('mensagens')">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                    </div>
+                `}).join('');
+            }
+        }
+
+        function updateClienteSelects() {
+            const options = localData.clientes.map(c => 
+                `<option value="${c.id}">${c.nome} - ${c.veiculo || 'Sem veículo'}</option>`
+            ).join('');
+            
+            const defaultOpt = '<option value="">Selecione um cliente</option>';
+            document.getElementById('selectCliente').innerHTML = defaultOpt + options;
+            document.getElementById('selectClienteOrc').innerHTML = defaultOpt + options;
+        }
+
+        // ==========================================
+        // UTILITÁRIOS
+        // ==========================================
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: 'check-circle',
+                error: 'exclamation-circle',
+                warning: 'exclamation-triangle',
+                info: 'info-circle',
+                whatsapp: 'whatsapp'
+            };
+            
+            toast.innerHTML = `<i class="fas fa-${icons[type] || 'check'}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openModal(type) {
+            document.getElementById(`modal${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.add('active');
+            const hoje = new Date().toISOString().split('T')[0];
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                if (!input.value) input.value = hoje;
+            });
+        }
+
+        function closeModal(type) {
+            document.getElementById(`modal${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.remove('active');
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.getElementById(`${section}-section`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+            
+            if (section === 'mensagens') {
+                loadWhatsAppChats();
+            }
+        }
+
+        async function refreshData() {
+            const icon = document.getElementById('syncIcon');
+            icon.classList.add('fa-spin');
+            await loadAllData();
+            icon.classList.remove('fa-spin');
+            showToast('🔄 Dados atualizados!', 'success');
+        }
+
+        function testConnection() {
+            connectToSupabase();
+        }
+
+        function loadMockData() {
+            localData = {
+                clientes: [
+                    { id: 1, nome: 'João Silva', telefone: '(11) 98765-4321', email: 'joao@email.com', veiculo: 'Honda Civic 2020', placa: 'ABC-1234', created_at: new Date().toISOString() },
+                    { id: 2, nome: 'Maria Santos', telefone: '(11) 98765-4322', email: 'maria@email.com', veiculo: 'Toyota Corolla 2019', placa: 'DEF-5678', created_at: new Date().toISOString() }
+                ],
+                agendamentos: [
+                    { id: 1, cliente_id: 1, clientes: { nome: 'João Silva', veiculo: 'Honda Civic 2020' }, data: new Date().toISOString().split('T')[0], hora: '09:00', servico: 'Troca de óleo', status: 'concluido', created_at: new Date().toISOString() }
+                ],
+                orcamentos: [
+                    { id: 1, cliente_id: 1, clientes: { nome: 'João Silva' }, servico: 'Freios completos', valor: 850.00, status: 'pendente', created_at: new Date().toISOString() }
+                ],
+                mensagens: []
+            };
+            
+            updateConnectionUI('error', 'Modo Offline');
+            renderClientesTable();
+            renderAgendamentosTable();
+            renderOrcamentosTable();
+            updateClienteSelects();
+            loadWhatsAppChats();
+            updateDashboard();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [ano, mes, dia] = dateStr.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        function formatTime(dateStr) {
+            if (!dateStr) return '--:--';
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatStatus(status) {
+            const map = {
+                'agendado': 'Agendado',
+                'em_andamento': 'Em andamento',
+                'concluido': 'Concluído',
+                'cancelado': 'Cancelado',
+                'pendente': 'Pendente',
+                'aprovado': 'Aprovado',
+                'rejeitado': 'Rejeitado',
+                'pago': 'Pago'
+            };
+            return map[status] || status;
+        }
+
+        function getStatusClass(status) {
+            const map = {
+                'concluido': 'completed',
+                'aprovado': 'completed',
+                'pago': 'completed',
+                'em_andamento': 'progress',
+                'agendado': 'pending',
+                'pendente': 'pending',
+                'cancelado': 'pending',
+                'rejeitado': 'pending'
+            };
+            return map[status] || 'pending';
+        }
+
+        function updateDate() {
+            const hoje = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const optionsFull = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            
+            document.getElementById('currentDate').textContent = hoje.toLocaleDateString('pt-BR', options);
+            document.getElementById('fullDate').textContent = hoje.toLocaleDateString('pt-BR', optionsFull);
+        }
+
+        async function deleteItem(tabela, id) {
+            if (!confirm('Confirmar exclusão?')) return;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from(tabela)
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                localData[tabela] = localData[tabela].filter(item => item.id !== id);
+                showToast('🗑️ Excluído!', 'success');
+                
+                if (tabela === 'clientes') {
+                    renderClientesTable();
+                    updateClienteSelects();
+                    loadWhatsAppChats();
+                }
+                if (tabela === 'agendamentos') renderAgendamentosTable();
+                if (tabela === 'orcamentos') renderOrcamentosTable();
+                updateDashboard();
+            } catch (error) {
+                showToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function updateStatus(tabela, id, novoStatus) {
+            if (!novoStatus) return;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from(tabela)
+                    .update({ status: novoStatus })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                const item = localData[tabela].find(i => i.id == id);
+                if (item) item.status = novoStatus;
+                
+                showToast('✅ Status atualizado!', 'success');
+                updateDashboard();
+                
+                if (tabela === 'agendamentos') renderAgendamentosTable();
+                if (tabela === 'orcamentos') renderOrcamentosTable();
+                
+                // Se concluído, oferecer enviar mensagem
+                if (novoStatus === 'concluido' && tabela === 'agendamentos') {
+                    const agendamento = localData.agendamentos.find(a => a.id == id);
+                    if (agendamento && confirm('Serviço concluído! Deseja notificar o cliente via WhatsApp?')) {
+                        selectClient(agendamento.cliente_id);
+                        showSection('mensagens');
+                        sendTemplate('pronto');
+                    }
+                }
+            } catch (error) {
+                showToast('❌ Erro: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
