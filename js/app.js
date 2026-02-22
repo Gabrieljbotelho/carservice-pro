@@ -964,7 +964,7 @@ showSection = function(section) {
     originalShowSectionCalendar(section);
     if (section === 'agenda') {
         set
-
+        
         // Busca em tempo real em todas as seções
 function globalSearch(query) {
     const results = {
