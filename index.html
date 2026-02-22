@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarService Pro - Gestão Automotiva</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Connection Status Bar -->
+    <div class="connection-bar connecting" id="connectionBar"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="color: var(--text-secondary);">Conectando ao Supabase...</p>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-wrench"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>CarService Pro</h1>
+                    <span>Gestão Automotiva</span>
+                    <span class="connection-badge offline" id="connectionBadge">
+                        <i class="fas fa-circle"></i> <span id="badgeText">Conectando...</span>
+                    </span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" onclick="showSection('dashboard')">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" onclick="showSection('clientes')">
+                    <i class="fas fa-users"></i>
+                    <span>Clientes</span>
+                </button>
+                <button class="nav-item" onclick="showSection('agenda')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Agenda</span>
+                </button>
+                <button class="nav-item" onclick="showSection('orcamentos')">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Orçamentos</span>
+                </button>
+                <button class="nav-item" onclick="showSection('mensagens')">
+                    <i class="far fa-comment-alt"></i>
+                    <span>Mensagens</span>
+                </button>
+                <button class="nav-item" onclick="showSection('perfil')">
+                    <i class="fas fa-cog"></i>
+                    <span>Perfil</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="help-box">
+                    <h4>Precisa de ajuda?</h4>
+                    <p id="connectionInfo">Conectando ao banco de dados...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="welcome">
+                    <h2>Bem-vindo de volta!</h2>
+                    <p id="currentDate">Carregando...</p>
+                </div>
+                <div class="header-actions">
+                    <div class="date-badge">
+                        <i class="far fa-clock"></i>
+                        <span id="fullDate">...</span>
+                    </div>
+                    <button class="icon-btn" onclick="refreshData()" title="Sincronizar">
+                        <i class="fas fa-sync-alt" id="syncIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section-content active">
+                <div class="dashboard-title">
+                    <h1>
+                        Dashboard 
+                        <span class="sync-badge syncing" id="syncBadge">
+                            <i class="fas fa-spinner fa-spin"></i> Sincronizando...
+                        </span>
+                    </h1>
+                    <p>Visão geral da sua oficina</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Clientes Ativos</span>
+                            <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                        </div>
+                        <div class="stat-value" id="statClientes">-</div>
+                        <div class="stat-change positive">Total de clientes</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Agendamentos Hoje</span>
+                            <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+                        </div>
+                        <div class="stat-value" id="statAgendamentos">-</div>
+                        <div class="stat-change positive">Para hoje</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Orçamentos Pendentes</span>
+                            <div class="stat-icon orange"><i class="fas fa-file-invoice"></i></div>
+                        </div>
+                        <div class="stat-value" id="statOrcamentos">-</div>
+                        <div class="stat-change negative">Aguardando aprovação</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Receita Aprovada</span>
+                            <div class="stat-icon emerald"><i class="fas fa-dollar-sign"></i></div>
+                        </div>
+                        <div class="stat-value" id="statReceita">R$ -</div>
+                        <div class="stat-change positive">Orçamentos aprovados</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="section-header">
+                        <h3>Ações Rápidas</h3>
+                    </div>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="openModal('cliente')">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Cadastrar Cliente</span>
+                        </button>
+                        <button class="action-btn" onclick="showSection('agenda')">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Ver Agenda</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('orcamento')">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Novo Orçamento</span>
+                        </button>
+                        <button class="action-btn" onclick="openModal('agendamento')">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Novo Agendamento</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Serviços Recentes</h3>
+                            <button class="view-all" onclick="showSection('agenda')">Ver todos</button>
+                        </div>
+                        <div class="service-list" id="recentServices">
+                            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Próximos Agendamentos</h3>
+                            <button class="view-all" onclick="showSection('agenda')">Ver agenda</button>
+                        </div>
+                        <div class="appointment-list" id="upcomingAppointments">
+                            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando...</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes Section -->
+            <div id="clientes-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Clientes</h1>
+                    <p>Gerencie seus clientes</p>
+                </div>
+                <div class="quick-actions" style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="openModal('cliente')">
+                        <i class="fas fa-plus"></i> Novo Cliente
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="clientesTable">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th>Veículo</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="5" class="empty-state">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Agenda Section -->
+            <div id="agenda-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Agenda</h1>
+                    <p>Agendamentos e serviços</p>
+                </div>
+                <div class="quick-actions" style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="openModal('agendamento')">
+                        <i class="fas fa-plus"></i> Novo Agendamento
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="agendaTable">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="5" class="empty-state">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Orçamentos Section -->
+            <div id="orcamentos-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Orçamentos</h1>
+                    <p>Gerencie orçamentos</p>
+                </div>
+                <div class="quick-actions" style="margin-bottom: 24px;">
+                    <button class="btn-primary" onclick="openModal('orcamento')">
+                        <i class="fas fa-plus"></i> Novo Orçamento
+                    </button>
+                </div>
+                <div class="panel">
+                    <table class="data-table" id="orcamentosTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="6" class="empty-state">Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mensagens Section -->
+            <div id="mensagens-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Mensagens</h1>
+                    <p>Central de atendimento</p>
+                </div>
+                <div class="panel">
+                    <div class="empty-state">
+                        <i class="fas fa-comments"></i>
+                        <p>Chat em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Perfil Section -->
+            <div id="perfil-section" class="section-content">
+                <div class="dashboard-title">
+                    <h1>Configurações</h1>
+                    <p>Status da conexão</p>
+                </div>
+                <div class="panel" style="max-width: 600px;">
+                    <div class="form-group">
+                        <label>Status da Conexão</label>
+                        <div id="configStatus" style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            Verificando...
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="testConnection()">
+                        <i class="fas fa-plug"></i> Testar Conexão
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalCliente">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Cadastrar Cliente</h2>
+                <button class="modal-close" onclick="closeModal('cliente')"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveCliente(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nome Completo *</label>
+                            <input type="text" name="nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefone *</label>
+                            <input type="tel" name="telefone" required placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Veículo</label>
+                            <input type="text" name="veiculo" placeholder="Ex: Honda Civic 2020">
+                        </div>
+                        <div class="form-group">
+                            <label>Placa</label>
+                            <input type="text" name="placa" placeholder="ABC-1234">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('cliente')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAgendamento">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Novo Agendamento</h2>
+                <button class="modal-close" onclick="closeModal('agendamento')"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveAgendamento(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Cliente *</label>
+                        <select name="cliente_id" id="selectCliente" required></select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Data *</label>
+                            <input type="date" name="data" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hora *</label>
+                            <input type="time" name="hora" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço *</label>
+                        <select name="servico" required>
+                            <option value="">Selecione...</option>
+                            <option value="Troca de óleo">Troca de óleo</option>
+                            <option value="Alinhamento">Alinhamento</option>
+                            <option value="Balanceamento">Balanceamento</option>
+                            <option value="Revisão completa">Revisão completa</option>
+                            <option value="Troca de pneus">Troca de pneus</option>
+                            <option value="Freios">Freios</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('agendamento')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-calendar-check"></i> Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOrcamento">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Novo Orçamento</h2>
+                <button class="modal-close" onclick="closeModal('orcamento')"><i class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="saveOrcamento(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Cliente *</label>
+                        <select name="cliente_id" id="selectClienteOrc" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço *</label>
+                        <input type="text" name="servico" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Valor (R$) *</label>
+                            <input type="number" name="valor" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Validade</label>
+                            <input type="date" name="validade">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('orcamento')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Gerar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
