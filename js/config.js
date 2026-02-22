@@ -16,6 +16,6 @@ const CONFIG = {
 };
 
 // Validação
-if (CONFIG.SUPABASE_KEY === 'sua-chave-anon-aqui') {
+if (CONFIG.SUPABASE_KEY === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imduendhbm5lcHVycHlyeXhhYmtmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3ODIwMjMsImV4cCI6MjA4NzM1ODAyM30.KplHmU3h3ZwaSLgs6tse6dcImEk-l8EDpm6zR9LPZhI') {
     console.error('❌ ERRO: Configure sua chave do Supabase em js/config.js');
 }
