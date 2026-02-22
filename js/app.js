@@ -830,3 +830,137 @@ showSection = function(section) {
         setTimeout(loadWhatsAppChats, 100);
     }
 };
+
+// ==========================================
+// CALENDÁRIO - NOVO
+// ==========================================
+
+let currentCalendarDate = new Date();
+let selectedCalendarDate = null;
+
+function initCalendar() {
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    
+    // Atualizar título
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+    
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    
+    // Cabeçalho dias da semana
+    const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    weekdays.forEach(day => {
+        const el = document.createElement('div');
+        el.className = 'calendar-weekday';
+        el.textContent = day;
+        grid.appendChild(el);
+    });
+    
+    // Dias do mês anterior
+    for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const el = createCalendarDay(day, true);
+        grid.appendChild(el);
+    }
+    
+    // Dias do mês atual
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+        const isSelected = selectedCalendarDate === dateStr;
+        
+        const el = createCalendarDay(day, false, dateStr, isToday, isSelected);
+        grid.appendChild(el);
+    }
+    
+    // Dias do próximo mês
+    const remainingCells = 42 - (firstDay + daysInMonth);
+    for (let day = 1; day <= remainingCells; day++) {
+        const el = createCalendarDay(day, true);
+        grid.appendChild(el);
+    }
+}
+
+function createCalendarDay(day, isOtherMonth, dateStr = null, isToday = false, isSelected = false) {
+    const el = document.createElement('div');
+    el.className = 'calendar-day';
+    
+    if (isOtherMonth) el.classList.add('other-month');
+    if (isToday) el.classList.add('today');
+    if (isSelected) el.classList.add('selected');
+    
+    el.innerHTML = `<span class="calendar-day-number">${day}</span>`;
+    
+    // Verificar se tem agendamentos neste dia
+    if (dateStr && !isOtherMonth) {
+        const hasAppointments = localData.agendamentos.some(a => a.data === dateStr);
+        if (hasAppointments) {
+            el.innerHTML += '<div class="calendar-day-badge"></div>';
+        }
+    }
+    
+    if (dateStr && !isOtherMonth) {
+        el.onclick = () => selectCalendarDate(dateStr);
+    }
+    
+    return el;
+}
+
+function selectCalendarDate(dateStr) {
+    selectedCalendarDate = dateStr;
+    renderCalendar(); // Re-render para atualizar seleção
+    
+    const [ano, mes, dia] = dateStr.split('-');
+    const displayDate = `${dia}/${mes}/${ano}`;
+    
+    const container = document.getElementById('selectedDayAppointments');
+    const appointments = localData.agendamentos.filter(a => a.data === dateStr);
+    
+    if (appointments.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-secondary);">Nenhum agendamento para ${displayDate}</p>`;
+        return;
+    }
+    
+    container.innerHTML = `
+        <h4 style="margin-bottom: 12px; color: var(--primary);">${displayDate} - ${appointments.length} agendamento(s)</h4>
+        <div class="service-list">
+            ${appointments.map(a => {
+                const cliente = a.clientes || localData.clientes.find(c => c.id == a.cliente_id);
+                return `
+                <div class="service-item">
+                    <div class="service-icon"><i class="fas fa-clock"></i></div>
+                    <div class="service-info">
+                        <h4>${cliente ? cliente.nome : 'Cliente'}</h4>
+                        <p>${a.servico} às ${a.hora}</p>
+                    </div>
+                    <span class="status-badge ${getStatusClass(a.status)}">${formatStatus(a.status)}</span>
+                </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function changeMonth(direction) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+    renderCalendar();
+}
+
+// Inicializar calendário quando mostrar agenda
+const originalShowSectionCalendar = showSection;
+showSection = function(section) {
+    originalShowSectionCalendar(section);
+    if (section === 'agenda') {
+        set
